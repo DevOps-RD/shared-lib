@@ -9,7 +9,7 @@ def call(Map config = [:]) {
             kubernetes {
                 // use yaml from resources
                 yaml libraryResource('k8s/maven-build-pod.yaml')
-                    .replace('maven:3.8-openjdk-11', config.mavenImage ?: constants.DOCKER_MAVEN)
+                    .replace('__MAVEN_IMAGE__', config.mavenImage ?: constants.DOCKER_MAVEN)
             }
         }
         
