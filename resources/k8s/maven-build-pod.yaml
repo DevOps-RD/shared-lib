@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: maven
+    image: maven:3.8-openjdk-11
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: maven-cache
+      mountPath: /root/.m2
+  - name: docker
+    image: docker:dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: maven-cache
+    emptyDir: {}
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
+
+
+## 为什么 resources 目录合适
+
+1. **Jenkins共享库标准结构**：`resources/` 目录是Jenkins共享库的标准目录，专门用于存放静态资源文件
+2. **自动加载**：Jenkins会自动将此目录下的文件打包到共享库中
+3. **便于引用**：可以通过 `libraryResource()` 函数轻松访问
+
+## 具体实现方案
+
+### 1. 创建YAML配置文件
+
+在 `resources/` 目录下创建 `k8s/maven-build-pod.yaml`：
+```yaml
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: maven
+    image: maven:3.8-openjdk-11
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: maven-cache
+      mountPath: /root/.m2
+  - name: docker
+    image: docker:dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: maven-cache
+    emptyDir: {}
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
+```

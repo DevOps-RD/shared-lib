@@ -1,0 +1,93 @@
+@Library('shared-lib') _
+
+// Demo 1: Basic Maven K8s Build
+mavenK8sBuild([
+    // Maven & JDK version
+    mavenImage: 'maven:3.9-openjdk-17',
+    
+    // Basic settings
+    skipTests: false,
+    buildDocker: true,
+    dockerRegistry: 'my-registry.com',
+    
+    // Git credentials
+    gitCredentials: 'git-creds'
+])
+
+// ============================================
+// Demo 2: Different JDK versions
+// ============================================
+
+// Java 11 + Maven 3.8
+/*
+mavenK8sBuild([
+    mavenImage: 'maven:3.8-openjdk-11',
+    dockerRegistry: 'my-registry.com'
+])
+*/
+
+// Java 17 + Maven 3.9  
+/*
+mavenK8sBuild([
+    mavenImage: 'maven:3.9-openjdk-17',
+    dockerRegistry: 'my-registry.com'
+])
+*/
+
+// Java 21 + Maven 3.9
+/*
+mavenK8sBuild([
+    mavenImage: 'maven:3.9-openjdk-21',
+    dockerRegistry: 'my-registry.com'
+])
+*/
+
+// ============================================
+// Demo 3: Production-ready configuration
+// ============================================
+
+/*
+def config = [
+    mavenImage: 'maven:3.9-openjdk-17',
+    dockerRegistry: 'my-registry.com',
+    gitCredentials: 'git-creds'
+]
+
+// Add quality checks for main branch
+if (env.BRANCH_NAME == 'main') {
+    config.runSonar = true
+    config.sonarUrl = 'https://sonar.company.com'
+    config.sonarToken = env.SONAR_TOKEN
+    config.projectKey = 'my-project'
+}
+
+mavenK8sBuild(config)
+*/
+
+// ============================================
+// Demo 4: Branch-specific configurations
+// ============================================
+
+/*
+def config = [
+    mavenImage: 'maven:3.9-openjdk-17',
+    dockerRegistry: 'my-registry.com',
+    gitCredentials: 'git-creds'
+]
+
+// Feature branches - quick build
+if (env.BRANCH_NAME.startsWith('feature/')) {
+    config.skipTests = true
+    config.buildDocker = false
+}
+// Main branch - full quality checks
+else if (env.BRANCH_NAME == 'main') {
+    config.runSonar = true
+    config.runSecurity = true
+    config.sonarUrl = 'https://sonar.company.com'
+    config.sonarToken = env.SONAR_TOKEN
+    config.projectKey = 'my-project'
+}
+
+mavenK8sBuild(config)
+*/
