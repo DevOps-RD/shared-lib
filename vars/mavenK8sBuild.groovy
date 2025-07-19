@@ -1,5 +1,6 @@
 @Library('shared-lib') _
 import com.devops.java.MvnBuild
+import com.devops.security.JavaScan
 
 def call(Map config = [:]) {
     def constants = constants()
@@ -35,6 +36,57 @@ def call(Map config = [:]) {
                                 sonarToken: config.sonarToken,
                                 projectKey: config.projectKey
                             ])
+                        }
+                    }
+                }
+            }
+            
+            stage('Security Scan') {
+                when {
+                    expression { config.runTrivyScan != false }
+                }
+                steps {
+                    container('trivy') {
+                        script {
+                            try {
+                                def scanConfig = [
+                                    format: config.trivyFormat ?: 'json',
+                                    outputFile: config.trivyOutputFile ?: 'trivy-maven-scan.json',
+                                    severity: config.trivySeverity ?: 'HIGH,CRITICAL',
+                                    exitCode: config.trivyExitCode ?: 1,
+                                    pomPath: config.pomPath ?: '.'
+                                ]
+                                
+                                def scanResult = JavaScan.scanMaven(scanConfig)
+                                echo "Running Trivy security scan: ${scanResult.command}"
+                                
+                                def exitCode = sh(
+                                    script: scanResult.command,
+                                    returnStatus: true
+                                )
+                                
+                                // Archive scan results
+                                if (fileExists(scanResult.outputFile)) {
+                                    archiveArtifacts artifacts: scanResult.outputFile, allowEmptyArchive: true
+                                    echo "Trivy scan results archived: ${scanResult.outputFile}"
+                                }
+                                
+                                // Handle scan results
+                                if (exitCode != 0) {
+                                    echo "Trivy scan found vulnerabilities (exit code: ${exitCode})"
+                                    if (config.failOnVulnerabilities != false) {
+                                        error("Security vulnerabilities detected by Trivy scan")
+                                    }
+                                } else {
+                                    echo "Trivy scan completed successfully - no vulnerabilities found"
+                                }
+                                
+                            } catch (Exception e) {
+                                echo "Trivy scan failed: ${e.getMessage()}"
+                                if (config.failOnSecurityError != false) {
+                                    error("Trivy security scan execution failed: ${e.getMessage()}")
+                                }
+                            }
                         }
                     }
                 }
