@@ -52,6 +52,25 @@ spec:
         cpu: "2"
         ephemeral-storage: "50Gi"
         
+  - name: trivy
+    image: aquasec/trivy:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: maven-cache
+      mountPath: /root/.m2
+      readOnly: true
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+        ephemeral-storage: "2Gi"
+      limits:
+        memory: "2Gi"
+        cpu: "1"
+        ephemeral-storage: "5Gi"
+        
   volumes:
   - name: maven-cache
     emptyDir:
